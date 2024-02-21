@@ -12,7 +12,7 @@ import com.matyrobbrt.enhancedgroovy.dsl.ClassTransformer
              modifiers: ['private', 'final']
 
     addField name: 'forgeBus',
-             type: 'net.minecraftforge.eventbus.api.IEventBus',
+             type: 'net.neoforged.bus.api.IEventBus',
              modifiers: ['private', 'final']
 
     addMethod name: 'getModBus',
@@ -20,6 +20,6 @@ import com.matyrobbrt.enhancedgroovy.dsl.ClassTransformer
               modifiers: ['private', 'final']
 
     addMethod name: 'getForgeBus',
-              returnType: 'net.minecraftforge.eventbus.api.IEventBus',
+              returnType: 'net.neoforged.bus.api.IEventBus',
               modifiers: ['private', 'final']
 }

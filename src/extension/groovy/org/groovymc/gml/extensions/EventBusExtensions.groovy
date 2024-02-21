@@ -7,12 +7,11 @@ package org.groovymc.gml.extensions
 
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.FirstParam
 import groovy.transform.stc.FromAbstractTypeMethods
 import groovy.transform.stc.SecondParam
-import net.minecraftforge.eventbus.api.Event
-import net.minecraftforge.eventbus.api.EventPriority
-import net.minecraftforge.eventbus.api.IEventBus
+import net.neoforged.bus.api.Event
+import net.neoforged.bus.api.EventPriority
+import net.neoforged.bus.api.IEventBus
 
 @CompileStatic
 class EventBusExtensions {
@@ -27,7 +26,7 @@ class EventBusExtensions {
     static <T extends Event> void addListener(final IEventBus self,
                                               final EventPriority priority = EventPriority.NORMAL,
                                               final boolean receiveCancelled = false,
-                                              @ClosureParams(value = FromAbstractTypeMethods, options = 'net.minecraftforge.eventbus.api.Event') final Closure<?> closure) {
+                                              @ClosureParams(value = FromAbstractTypeMethods, options = 'net.neoforged.bus.api.Event') final Closure<?> closure) {
         if (closure.parameterTypes.size() !== 1 || closure.parameterTypes[0] === Object)
             throw new IllegalArgumentException('Closure must have one explicitly typed parameter. For example: modBus.addListener { FMLCommonSetupEvent event -> ... }')
 
@@ -40,7 +39,7 @@ class EventBusExtensions {
      *
      * @param eventClass unused parameter needed in order to properly specify the event type
      * @param priority {@link EventPriority} for this listener. Defaults to {@link EventPriority#NORMAL}
-     * @param receiveCancelled indicate if this listener should receive events that have been {@link net.minecraftforge.eventbus.api.Cancelable} cancelled. Defaults to {@code false}.
+     * @param receiveCancelled indicate if this listener should receive events that have been {@link net.neoforged.bus.api.Cancelable} cancelled. Defaults to {@code false}.
      * @param closure callback to invoke when a matching event is received.
      * @param <T>  the {@link Event} subclass to listen for
      */

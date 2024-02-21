@@ -1,4 +1,4 @@
-ModsDotGroovy.make {
+NeoForgeModsDotGroovy.make {
     modLoader = 'gml'
     loaderVersion = '[1,)'
     license = 'MIT'

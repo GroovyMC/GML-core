@@ -17,14 +17,14 @@ import org.groovymc.gml.scriptmods.util.FileSystemInjector;
 import cpw.mods.jarhandling.SecureJar;
 import cpw.mods.modlauncher.api.LamdbaExceptionUtils;
 import cpw.mods.niofs.union.UnionFileSystemProvider;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.fml.loading.FileUtils;
-import net.minecraftforge.fml.loading.LogMarkers;
-import net.minecraftforge.fml.loading.moddiscovery.ModFile;
-import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
-import net.minecraftforge.forgespi.language.IConfigurable;
-import net.minecraftforge.forgespi.locating.IModFile;
-import net.minecraftforge.forgespi.locating.IModLocator;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FileUtils;
+import net.neoforged.fml.loading.LogMarkers;
+import net.neoforged.fml.loading.moddiscovery.ModFile;
+import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
+import net.neoforged.neoforgespi.language.IConfigurable;
+import net.neoforged.neoforgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.IModLocator;
 import org.apache.commons.lang3.function.TriFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,8 +226,7 @@ public class ScriptModLocator implements IModLocator {
             }
         });
 
-        var mod = new ScriptModFile(sj, this, file -> new ModFileInfo((ModFile) file, infoParser.apply(fs, file, modId), List.of()), modId, modId);
-
+        var mod = new ScriptModFile(sj, this, file -> new ModFileInfo((ModFile) file, infoParser.apply(fs, file, modId), iModFileInfo -> {}, List.of()), modId, modId);
         mjm.setModFile(mod);
         return new ModFileOrException(mod, null);
     }

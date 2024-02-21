@@ -5,11 +5,11 @@
 
 package org.groovymc.gml.transform.gmods
 
+import net.neoforged.neoforge.common.NeoForge
 import org.groovymc.gml.GMLModLoadingContext
 import org.groovymc.gml.bus.GModEventBus
 import groovy.transform.CompileStatic
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.eventbus.api.IEventBus
+import net.neoforged.bus.api.IEventBus
 import org.codehaus.groovy.ast.AnnotationNode
 import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
@@ -36,7 +36,7 @@ final class BusTransformer implements GModTransformer {
 
         final forgeBus = classNode.addField(
                 'forgeBus', Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL, ClassHelper.make(IEventBus),
-                GeneralUtils.propX(GeneralUtils.classX(MinecraftForge), 'EVENT_BUS')
+                GeneralUtils.propX(GeneralUtils.classX(NeoForge), 'EVENT_BUS')
         )
         getOrCreateMethod(classNode, 'getForgeBus', forgeBus.type).setCode(
                 GeneralUtils.returnS(GeneralUtils.fieldX(forgeBus))

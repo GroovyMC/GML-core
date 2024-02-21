@@ -5,9 +5,9 @@
 
 package org.groovymc.gml.scriptmods;
 
-import net.minecraftforge.fml.loading.moddiscovery.ModFile;
-import net.minecraftforge.forgespi.locating.IModProvider;
-import net.minecraftforge.forgespi.locating.ModFileFactory;
+import net.neoforged.fml.loading.moddiscovery.ModFile;
+import net.neoforged.neoforgespi.locating.IModProvider;
+import net.neoforged.neoforgespi.locating.ModFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

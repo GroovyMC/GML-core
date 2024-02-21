@@ -5,10 +5,11 @@
 
 package org.groovymc.gml.bus
 
+import groovy.transform.CompileStatic
+import net.neoforged.api.distmarker.Dist
 import org.groovymc.gml.bus.type.BusType
-import org.groovymc.gml.bus.type.ForgeBus
+import org.groovymc.gml.bus.type.GameBus
 import org.groovymc.gml.util.Environment
-import net.minecraftforge.api.distmarker.Dist
 
 import java.lang.annotation.Documented
 import java.lang.annotation.ElementType
@@ -18,12 +19,13 @@ import java.lang.annotation.Target
 
 /**
  * Annotate a class which will be subscribed to an Event Bus at mod construction time.
- * Defaults to subscribing to the {@link ForgeBus forge bus}
+ * Defaults to subscribing to the {@link GameBus Game bus}
  * on both sides.
  *
  * @see BusType
  */
 @Documented
+@CompileStatic
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @interface EventBusSubscriber {
@@ -32,7 +34,7 @@ import java.lang.annotation.Target
      *
      * @return the bus you wish to listen to
      */
-    Class<? extends BusType> value() default ForgeBus
+    Class<? extends BusType> value() default GameBus
 
     /**
      * Optional value, only necessary if this annotation is not on in a package of your mod. <br>

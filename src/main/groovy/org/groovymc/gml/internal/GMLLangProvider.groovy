@@ -5,25 +5,21 @@
 
 package org.groovymc.gml.internal
 
-import org.groovymc.gml.GMod
-import org.groovymc.gml.internal.locator.ModLocatorInjector
-import org.groovymc.gml.internal.scripts.ScriptFileCompiler
-import org.groovymc.gml.mappings.MappingsProvider
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import net.minecraftforge.fml.loading.FMLEnvironment
-import net.minecraftforge.fml.loading.moddiscovery.ModFile
-import net.minecraftforge.forgespi.language.ILifecycleEvent
-import net.minecraftforge.forgespi.language.IModLanguageProvider
-import net.minecraftforge.forgespi.language.ModFileScanData
-import net.minecraftforge.forgespi.locating.IModFile
+import net.neoforged.fml.loading.moddiscovery.ModFile
+import net.neoforged.neoforgespi.language.IModLanguageProvider
+import net.neoforged.neoforgespi.language.ModFileScanData
+import net.neoforged.neoforgespi.locating.IModFile
+import org.groovymc.gml.GMod
+import org.groovymc.gml.internal.locator.ModLocatorInjector
+import org.groovymc.gml.internal.scripts.ScriptFileCompiler
 import org.objectweb.asm.Type
 
 import java.nio.file.FileSystem
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
-import java.util.function.Supplier
 
 @Slf4j
 @CompileStatic
@@ -31,10 +27,6 @@ final class GMLLangProvider implements IModLanguageProvider {
     private static final Type GMOD_TYPE = Type.getType(GMod)
 
     GMLLangProvider() {
-        if (FMLEnvironment.production) {
-            // Only load mappings in prod
-            MappingsProvider.INSTANCE.startMappingsSetup()
-        }
         ModLocatorInjector.inject()
     }
 
@@ -66,7 +58,4 @@ final class GMLLangProvider implements IModLanguageProvider {
     private static void compile(IModFile file, ModFileScanData scanData) {
         new ScriptFileCompiler((FileSystem)file.fs, (String)file.modId, (String)file.rootPackage, (AtomicBoolean)file.wasCompiled, (ModFile)file).compile(scanData)
     }
-
-    @Override
-    <R extends ILifecycleEvent<R>> void consumeLifecycleEvent(final Supplier<R> consumeEvent) { }
 }

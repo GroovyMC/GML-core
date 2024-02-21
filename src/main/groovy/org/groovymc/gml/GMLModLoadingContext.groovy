@@ -10,7 +10,7 @@ import org.groovymc.gml.bus.GModEventBus
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
-import net.minecraftforge.fml.ModLoadingContext
+import net.neoforged.fml.ModLoadingContext
 
 @CompileStatic
 @PackageScope([PackageScopeTarget.CONSTRUCTORS])
@@ -37,7 +37,7 @@ class GMLModLoadingContext {
     }
 
     /**
-     * Helper to get the right instance from the {@link net.minecraftforge.fml.ModLoadingContext} correctly.
+     * Helper to get the right instance from the {@link net.neoforged.fml.ModLoadingContext} correctly.
      * @return The GMLMod language specific extension from the ModLoadingContext
      */
     static GMLModLoadingContext get() {

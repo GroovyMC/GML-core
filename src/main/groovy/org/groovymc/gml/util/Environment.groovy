@@ -6,7 +6,7 @@
 package org.groovymc.gml.util
 
 import groovy.transform.CompileStatic
-import net.minecraftforge.fml.loading.FMLLoader
+import net.neoforged.fml.loading.FMLLoader
 
 import java.util.function.BooleanSupplier
 

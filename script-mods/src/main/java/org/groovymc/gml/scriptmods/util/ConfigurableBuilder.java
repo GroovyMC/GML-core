@@ -5,7 +5,7 @@
 
 package org.groovymc.gml.scriptmods.util;
 
-import net.minecraftforge.forgespi.language.IConfigurable;
+import net.neoforged.neoforgespi.language.IConfigurable;
 
 import java.util.Arrays;
 import java.util.HashMap;

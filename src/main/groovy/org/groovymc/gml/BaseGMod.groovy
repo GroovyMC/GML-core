@@ -7,7 +7,7 @@ package org.groovymc.gml
 
 import org.groovymc.gml.bus.GModEventBus
 import groovy.transform.CompileStatic
-import net.minecraftforge.eventbus.api.IEventBus
+import net.neoforged.bus.api.IEventBus
 
 /**
  * An interface providing different CompileStatic utility methods for {@link org.groovymc.gml.GMod GMods}.

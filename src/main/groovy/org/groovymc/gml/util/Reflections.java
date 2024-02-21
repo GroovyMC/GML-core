@@ -51,6 +51,12 @@ public final class Reflections {
         };
     }
 
+    public static <T> T getField(Field field, Object object) {
+        final long l = UNSAFE.objectFieldOffset(field);
+        return (T) UNSAFE.getObject(object, l);
+    }
+
+
     public interface MethodCaller<T> {
         T call(Object... args) throws Throwable;
     }

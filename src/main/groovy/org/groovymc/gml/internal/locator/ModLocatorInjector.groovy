@@ -9,14 +9,13 @@ import org.groovymc.gml.util.Reflections
 import org.groovymc.gml.util.Reflections.MethodCaller
 import cpw.mods.modlauncher.api.IModuleLayerManager
 import groovy.transform.CompileStatic
-import net.minecraftforge.fml.loading.FMLLoader
-import net.minecraftforge.fml.loading.moddiscovery.InvalidModFileException
-import net.minecraftforge.fml.loading.moddiscovery.ModFile
-import net.minecraftforge.fml.loading.moddiscovery.ModValidator
-import net.minecraftforge.fml.unsafe.UnsafeHacks
-import net.minecraftforge.forgespi.language.IConfigurable
-import net.minecraftforge.forgespi.locating.IModFile
-import net.minecraftforge.forgespi.locating.IModLocator
+import net.neoforged.fml.loading.FMLLoader
+import net.neoforged.fml.loading.moddiscovery.InvalidModFileException
+import net.neoforged.fml.loading.moddiscovery.ModFile
+import net.neoforged.fml.loading.moddiscovery.ModValidator
+import net.neoforged.neoforgespi.language.IConfigurable
+import net.neoforged.neoforgespi.locating.IModFile
+import net.neoforged.neoforgespi.locating.IModLocator
 import org.apache.commons.lang3.function.TriFunction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -66,8 +65,8 @@ class ModLocatorInjector {
                 MethodType.fromMethodDescriptorString('(Lorg/apache/commons/lang3/function/TriFunction;)V', module.orElseThrow().classLoader)
         ).call(infoParser)
         final ModValidator validator = Reflections.getStaticField(modValidatorField)
-        final List<ModFile> candidateMods = UnsafeHacks.getField(candidateModsField, validator)
-        final List<IModFile> brokenFiles = UnsafeHacks.getField(brokenFilesField, validator)
+        final List<ModFile> candidateMods = Reflections.getField(candidateModsField, validator)
+        final List<IModFile> brokenFiles = Reflections.getField(brokenFilesField, validator)
 
         final oldCandidateSize = candidateMods.size()
         final oldBrokenSize = brokenFiles.size()

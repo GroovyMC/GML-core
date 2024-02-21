@@ -6,7 +6,7 @@
 package org.groovymc.gml.internal.locator
 
 import groovy.transform.CompileStatic
-import net.minecraftforge.forgespi.language.IConfigurable
+import net.neoforged.neoforgespi.language.IConfigurable
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -9,28 +9,28 @@
     ],
 
     // Lifecycle events
-    "net.minecraftforge.fml.event.lifecycle",
+    "net.neoforged.fml.event.lifecycle",
 
     // EventBus API
-    "net.minecraftforge.eventbus.api",
+    "net.neoforged.bus.api",
 
     // Chat message components
     "net.minecraft.network.chat",
 
     // Add some 'common' MC events
     [
-      "net.minecraftforge.event",
+      "net.neoforged.neoforge.event",
 
       // Entity events
       [
-        "net.minecraftforge.event.entity",
-        "net.minecraftforge.event.entity.item",
-        "net.minecraftforge.event.entity.living",
-        "net.minecraftforge.event.entity.player"
+        "net.neoforged.neoforge.event.entity",
+        "net.neoforged.neoforge.event.entity.item",
+        "net.neoforged.neoforge.event.entity.living",
+        "net.neoforged.neoforge.event.entity.player"
       ],
 
-      "net.minecraftforge.event.level",
-      "net.minecraftforge.event.server"
+      "net.neoforged.neoforge.event.level",
+      "net.neoforged.neoforge.event.server"
     ]
   ],
 
@@ -41,8 +41,8 @@
 
     // Lifecycle events, aliased for ease of usage
     [
-      "net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent as ClientSetupEvent",
-      "net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent as CommonSetupEvent",
+      "net.neoforged.fml.event.lifecycle.FMLClientSetupEvent as ClientSetupEvent",
+      "net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent as CommonSetupEvent",
     ],
 
     // Groovy stuff

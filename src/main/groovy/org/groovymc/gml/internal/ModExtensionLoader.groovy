@@ -7,10 +7,10 @@ package org.groovymc.gml.internal
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import net.minecraftforge.api.distmarker.Dist
-import net.minecraftforge.api.distmarker.OnlyIn
-import net.minecraftforge.fml.ModList
-import net.minecraftforge.fml.loading.FMLEnvironment
+import net.neoforged.api.distmarker.Dist
+import net.neoforged.api.distmarker.OnlyIn
+import net.neoforged.fml.ModList
+import net.neoforged.fml.loading.FMLEnvironment
 import org.codehaus.groovy.reflection.CachedClass
 import org.codehaus.groovy.runtime.m12n.ExtensionModule
 import org.codehaus.groovy.runtime.m12n.ExtensionModuleScanner

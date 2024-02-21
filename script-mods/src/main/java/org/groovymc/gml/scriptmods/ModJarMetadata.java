@@ -6,7 +6,7 @@
 package org.groovymc.gml.scriptmods;
 
 import cpw.mods.jarhandling.JarMetadata;
-import net.minecraftforge.forgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.IModFile;
 
 import java.lang.module.ModuleDescriptor;
 import java.util.Objects;

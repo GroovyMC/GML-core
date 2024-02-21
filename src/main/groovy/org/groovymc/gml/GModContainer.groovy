@@ -5,10 +5,13 @@
 
 package org.groovymc.gml
 
-
+import net.neoforged.api.distmarker.Dist
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforgespi.language.IModInfo
+import net.neoforged.neoforgespi.language.ModFileScanData
 import org.groovymc.gml.bus.EventBusSubscriber
 import org.groovymc.gml.bus.GModEventBus
-import org.groovymc.gml.bus.type.ForgeBus
+import org.groovymc.gml.bus.type.GameBus
 import org.groovymc.gml.bus.type.ModBus
 import org.groovymc.gml.internal.scripts.ScriptFileCompiler
 import org.groovymc.gml.util.Environment
@@ -16,20 +19,15 @@ import org.groovymc.gml.util.Reflections
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import net.minecraftforge.api.distmarker.Dist
-import net.minecraftforge.eventbus.EventBusErrorMessage
-import net.minecraftforge.eventbus.api.BusBuilder
-import net.minecraftforge.eventbus.api.Event
-import net.minecraftforge.fml.Bindings
-import net.minecraftforge.fml.ModContainer
-import net.minecraftforge.fml.ModLoadingException
-import net.minecraftforge.fml.ModLoadingStage
-import net.minecraftforge.fml.config.IConfigEvent
-import net.minecraftforge.fml.event.IModBusEvent
-import net.minecraftforge.fml.loading.FMLEnvironment
-import net.minecraftforge.fml.loading.moddiscovery.ModAnnotation
-import net.minecraftforge.forgespi.language.IModInfo
-import net.minecraftforge.forgespi.language.ModFileScanData
+import net.neoforged.bus.EventBusErrorMessage
+import net.neoforged.bus.api.BusBuilder
+import net.neoforged.fml.Bindings
+import net.neoforged.fml.ModContainer
+import net.neoforged.fml.ModLoadingException
+import net.neoforged.fml.ModLoadingStage
+import net.neoforged.fml.event.IModBusEvent
+import net.neoforged.fml.loading.FMLEnvironment
+import net.neoforged.fml.loading.moddiscovery.ModAnnotation
 import org.objectweb.asm.Type
 
 import java.lang.invoke.MethodType
@@ -39,7 +37,7 @@ import java.util.function.Consumer
 @Slf4j
 @CompileStatic
 final class GModContainer extends ModContainer {
-    private static final Type FORGE_EBS = Type.getType(ForgeBus)
+    private static final Type FORGE_EBS = Type.getType(GameBus)
     private static final Type MOD_EBS = Type.getType(ModBus)
     private static final Type EBS = Type.getType(EventBusSubscriber)
     private static Consumer<IModInfo> packMetaInjector
@@ -54,13 +52,12 @@ final class GModContainer extends ModContainer {
         this.scanData = scanData
 
         activityMap[ModLoadingStage.CONSTRUCT] = this.&constructMod
-        this.configHandler = Optional.of(this::postConfigEvent as Consumer<IConfigEvent>)
         this.contextExtension = { new GMLModLoadingContext(this) }
 
         modBus = new GModEventBus(BusBuilder.builder()
                     .setExceptionHandler { bus, event, listeners, i, cause -> log.error('Failed to process mod event: {}', new EventBusErrorMessage(event, i, listeners, cause)) }
-                    .setTrackPhases(false)
                     .markerType(IModBusEvent)
+                    .allowPerPhasePost()
                     .build())
 
         final module = layer.findModule(info.owningFile.moduleName()).orElseThrow()
@@ -184,16 +181,7 @@ final class GModContainer extends ModContainer {
     }
 
     @Override
-    protected <T extends Event & IModBusEvent> void acceptEvent(T e) {
-        try {
-            modBus.post(e)
-        } catch (Throwable t) {
-            log.error('Caught exception in mod \'{}\' during event dispatch for {}', modId, e, t)
-            throw new ModLoadingException(this.modInfo, this.modLoadingStage, 'fml.modloading.errorduringevent', t)
-        }
-    }
-
-    private void postConfigEvent(final IConfigEvent event) {
-        modBus.post(event.self())
+    IEventBus getEventBus() {
+        return modBus
     }
 }

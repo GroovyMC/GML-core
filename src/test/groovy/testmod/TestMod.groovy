@@ -11,9 +11,9 @@ import org.groovymc.gml.bus.EventBusSubscriber
 import org.groovymc.gml.bus.type.ModBus
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent
-import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent
+import net.neoforged.bus.api.SubscribeEvent
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
+import net.neoforged.fml.event.lifecycle.FMLConstructModEvent
 
 @Slf4j
 @CompileStatic
