@@ -40,7 +40,7 @@ managedVersioning {
                 readOnly.set false
                 gradlew 'Tag Release', 'tagRelease'
                 gradlew 'Build', 'build'
-                gradlew 'Publish', 'publish'
+                gradlew 'Publish', 'publish', 'closeAndReleaseSonatypeStagingRepository'
                 step {
                     run.set 'git push && git push --tags'
                 }
