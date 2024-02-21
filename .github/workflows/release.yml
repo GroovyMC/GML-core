@@ -59,9 +59,6 @@
                     }
                 },
                 {
-                    "run": "git push && git push --tags"
-                },
-                {
                     "name": "Publish",
                     "run": "./gradlew publish",
                     "id": "publish",
@@ -71,6 +68,9 @@
                         "GPG_SIGNING_KEY": "${{ secrets.GPG_SIGNING_KEY }}",
                         "GPG_KEY_PASSWORD": "${{ secrets.GPG_KEY_PASSWORD }}"
                     }
+                },
+                {
+                    "run": "git push && git push --tags"
                 }
             ]
         }

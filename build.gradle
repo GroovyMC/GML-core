@@ -40,10 +40,10 @@ managedVersioning {
                 readOnly.set false
                 gradlew 'Tag Release', 'tagRelease'
                 gradlew 'Build', 'build'
+                gradlew 'Publish', 'publish'
                 step {
                     run.set 'git push && git push --tags'
                 }
-                gradlew 'Publish', 'publish'
                 secret('CENTRAL_MAVEN_USER')
                 secret('CENTRAL_MAVEN_PASSWORD')
                 secret('GPG_SIGNING_KEY')
