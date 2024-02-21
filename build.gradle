@@ -176,6 +176,7 @@ tasks.named('jar', Jar).configure {
     manifest.attributes(manifestAttr + [
             'Automatic-Module-Name': 'org.groovymc.gml'
     ])
+    archiveClassifier = 'slim'
 }
 
 final transformDest = new File(buildDir, 'libs/transform')
@@ -225,7 +226,7 @@ tasks.named('fullJar', ForgeJarInJarTask).configure {
     manifest.attributes(manifestAttr + [
             'Automatic-Module-Name': 'org.groovymc.gml'
     ])
-    archiveClassifier.set('all')
+    archiveClassifier.set('')
     group('build')
 
     fromJar(tasks.named('groovyJar')) { versionRange nextMajor }
