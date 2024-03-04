@@ -27,7 +27,7 @@ dependencies {
     implementation 'cpw.mods:securejarhandler:2.1.4'
     implementation 'net.minecraftforge:forgespi:6.0.0'
     implementation 'com.electronwill.night-config:toml:3.6.4'
-    implementation "org.apache.groovy:groovy:${groovy_version}"
+    implementation "org.groovymc:groovybundler:${project.groovybundler_version}"
     implementation "net.neoforged.fancymodloader:loader:${fml_version}"
 
     shadow('com.google.jimfs:jimfs:1.2') {

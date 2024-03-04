@@ -1,9 +1,6 @@
-import com.matyrobbrt.gradle.jarinjar.task.*
+import com.matyrobbrt.gradle.jarinjar.task.ForgeJarInJarTask
 import com.matyrobbrt.gradle.jarinjar.transform.ForgeManifestFixerTransformer
-import groovy.transform.CompileStatic
 import org.groovymc.modsdotgroovy.gradle.MDGExtension
-import org.w3c.dom.Document
-import org.w3c.dom.Element
 
 plugins {
     id 'java-library'
@@ -24,6 +21,8 @@ group = 'org.groovymc.gml'
 base {
     archivesName = 'gml-core'
 }
+
+java.withSourcesJar()
 
 managedVersioning {
     versionFile.set rootProject.file('version.properties')
@@ -72,9 +71,21 @@ repositories {
 sourceSets.main.extensions.getByType(MDGExtension).disable()
 sourceSets.test.extensions.getByType(MDGExtension).enable()
 
+sourceSets.each {
+    def localRuntime = configurations.maybeCreate(it.getTaskName(null, 'localRuntime'))
+    configurations.named(it.runtimeClasspathConfigurationName).configure {
+        extendsFrom localRuntime
+    }
+}
+
 configurations {
-    groovy
-    compileOnly.extendsFrom(groovy)
+    include
+    groovy {
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME))
+        }
+    }
+    compileOnlyApi.extendsFrom(groovy)
     testCompileOnly.extendsFrom(groovy)
     extensionCompileOnly.extendsFrom(groovy)
     transformCompileOnly.extendsFrom(groovy)
@@ -83,6 +94,17 @@ configurations {
     implementation.extendsFrom(mc)
     extensionCompileOnly.extendsFrom(mc)
     transformCompileOnly.extendsFrom(mc)
+
+    javadocElements {
+        canBeConsumed = true
+        canBeResolved = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME))
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION))
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.class, Bundling.EXTERNAL))
+            attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, DocsType.JAVADOC))
+        }
+    }
 }
 
 tasks.register('fullJar', ForgeJarInJarTask)
@@ -115,16 +137,6 @@ runs {
     }
 }
 
-final groovyLibs = [
-        'stdlib', 'contracts', 'datetime',
-        'nio', 'macro', 'macro-library',
-        'templates', 'typecheckers',
-
-        'dateutil', 'ginq',
-
-        'toml', 'json'
-]
-
 dependencies {
     minecraft "net.neoforged:neoforge:20.4.167"
 
@@ -132,23 +144,20 @@ dependencies {
     compileOnly(testCompileOnly(sourceSets.extension.output))
     testCompileOnly(sourceSets.transform.output)
 
-    groovyLibs.each {
-        groovy groovyDep(it as String)
+    groovy "org.groovymc:groovybundler:${project.groovybundler_version}"
+    include("org.groovymc:groovybundler:${project.groovybundler_version}") {
+        transitive = false
     }
     
-    runtimeOnly(files(project.tasks.fullJar.archiveFile))
+    localRuntime(files(project.tasks.fullJar.archiveFile) {
+        builtBy(project.tasks.fullJar)
+    })
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
-
-String groovyDep(final String name) {
-    return "${groovyId(name)}:${project.groovy_version}"
-}
-
-static String groovyId(final String name) {
-    return "org.apache.groovy:groovy${name == 'stdlib' ? '' : '-' + name}"
+sourceSets.each {
+    tasks.named(it.compileJavaTaskName, JavaCompile).configure {
+        options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    }
 }
 
 jij.onConfiguration('groovy') {
@@ -166,57 +175,22 @@ final manifestAttr = [
         'Implementation-Title'  : project.name,
         'Implementation-Version': project.version,
         'Implementation-Vendor' : 'GroovyMC',
-        'BundledGroovyVersion'  : project.groovy_version,
-        'GitCommit'             : getGitCommit(),
+        'GitCommit'             : managedVersioning.hash,
         'FMLModType'            : 'LIBRARY'
 ]
 
 tasks.named('jar', Jar).configure {
     from sourceSets.extension.output
+    from sourceSets.transform.output
     manifest.attributes(manifestAttr + [
             'Automatic-Module-Name': 'org.groovymc.gml'
     ])
     archiveClassifier = 'slim'
 }
 
-final transformDest = new File(buildDir, 'libs/transform')
-tasks.register('transformJar', Jar) {
-    from sourceSets.transform.output
-    manifest.attributes(manifestAttr + [
-            'Specification-Title': 'GML-Transform'
-    ])
-    archiveBaseName.set('transform')
-    destinationDirectory.set(transformDest)
-}
-
-tasks.register('transformSources', Jar) {
+tasks.named('sourcesJar', Jar).configure {
+    from sourceSets.extension.allSource
     from sourceSets.transform.allSource
-    archiveBaseName.set('transform')
-    archiveClassifier.set('sources')
-    destinationDirectory.set(transformDest)
-}
-
-tasks.register('transformGroovydoc', Groovydoc) {
-    source sourceSets.transform.allSource
-    classpath = sourceSets.main.compileClasspath
-    destinationDir = new File(transformDest, 'groovydoc')
-}
-
-tasks.register('transformJavadocJar', Jar) {
-    archiveClassifier = 'javadoc'
-    from tasks.transformGroovydoc.destinationDir
-    dependsOn('transformGroovydoc')
-    destinationDirectory.set(transformDest)
-}
-
-tasks.register('groovyJar', ForgeJarInJarTask) {
-    group('build')
-    archiveBaseName.set('groovy-fat')
-    fromConfiguration(project.configurations.groovy)
-    manifest.attributes(manifestAttr + [
-            'Specification-Title': 'GML-GroovyFatJar',
-            'Automatic-Module-Name': 'org.groovymc.gml.groovyjij'
-    ])
 }
 
 tasks.named('fullJar', ForgeJarInJarTask).configure {
@@ -228,8 +202,7 @@ tasks.named('fullJar', ForgeJarInJarTask).configure {
     ])
     archiveClassifier.set('')
     group('build')
-
-    fromJar(tasks.named('groovyJar')) { versionRange nextMajor }
+    fromConfiguration(project.configurations.include)
 
     tasks.build.dependsOn(it)
 }
@@ -248,10 +221,9 @@ tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
     task.groovyOptions.optimizationOptions.indy = true
 }
 
-java.withSourcesJar()
-java.withJavadocJar()
-
 groovydoc {
+    source sourceSets.extension.allSource
+    source sourceSets.transform.allSource
     use = true
 }
 
@@ -261,10 +233,18 @@ tasks.register('groovydocJar', Jar) {
     dependsOn(groovydoc)
 }
 
-static String getGitCommit() {
-    final proc = 'git rev-parse --short HEAD'.execute()
-    proc.waitFor()
-    return proc.exitValue() ? "ERROR(${proc.exitValue()})" : proc.text.trim()
+configurations.runtimeElements.artifacts.clear()
+configurations.apiElements.artifacts.clear()
+
+artifacts {
+    javadocElements groovydocJar
+    runtimeElements fullJar
+    apiElements fullJar
+}
+
+project.components.named("java").configure {
+    AdhocComponentWithVariants javaComponent = (AdhocComponentWithVariants) it
+    javaComponent.addVariantsFromConfiguration(configurations.javadocElements) {}
 }
 
 void sharedMetadata(MavenPom it) {
@@ -304,45 +284,13 @@ nexusPublishing {
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
-            it.artifacts = [
-                    jar, sourcesJar, fullJar, groovydocJar
-            ]
-            it.artifactId = 'gml-core'
+            from components.java
+            it.artifactId = base.archivesName.get()
 
             pom {
                 name = 'GML'
                 description = 'A language provider for Forge mods for Groovy'
                 sharedMetadata(it)
-                withXml { XmlProvider xml ->
-                    final element = xml.asElement()
-                    var depsElem = element.getOwnerDocument().createElement('dependencies')
-                    var owner = element.getOwnerDocument()
-                    var deps = (DependencySet) project.configurations.groovy.getDependencies()
-                    deps.each {
-                        depsElem.appendChild createDependency(owner, it.group, it.name, it.version, 'compile')
-                    }
-                    depsElem.appendChild createDependency(owner, project.group, 'transform', project.version, 'compile')
-                    element.appendChild(depsElem)
-                }
-            }
-        }
-        register('transform', MavenPublication) {
-            it.artifactId = 'transform'
-            it.artifacts = [transformJar, transformSources, transformJavadocJar]
-            pom {
-                name = 'GML - Transform'
-                description = 'Compile-time transforms for GML'
-                sharedMetadata(it)
-                withXml { XmlProvider xml ->
-                    final element = xml.asElement()
-                    var depsElem = element.getOwnerDocument().createElement('dependencies')
-                    var owner = element.getOwnerDocument()
-                    var deps = (DependencySet) project.configurations.groovy.getDependencies()
-                    deps.each {
-                        depsElem.appendChild createDependency(owner, it.group, it.name, it.version, 'compile')
-                    }
-                    element.appendChild(depsElem)
-                }
             }
         }
     }
@@ -362,27 +310,4 @@ if (System.getenv('GPG_SIGNING_KEY')) {
         sign publishing.publications.mavenJava
         sign publishing.publications.transform
     }
-}
-
-@CompileStatic
-static Element createDependency(Document owner, String group, String name, String version, String scope) {
-    var sub = owner.createElement('dependency')
-
-    var groupEl = owner.createElement('groupId')
-    groupEl.appendChild(owner.createTextNode(group))
-    sub.appendChild groupEl
-
-    var artEl = owner.createElement('artifactId')
-    artEl.appendChild(owner.createTextNode(name))
-    sub.appendChild artEl
-
-    var verEl = owner.createElement('version')
-    verEl.appendChild(owner.createTextNode(version))
-    sub.appendChild verEl
-
-    var scopeEl = owner.createElement('scope')
-    scopeEl.appendChild(owner.createTextNode(scope))
-    sub.appendChild scopeEl
-
-    return sub
 }
