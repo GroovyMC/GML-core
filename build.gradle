@@ -64,10 +64,6 @@ sourceSets {
     register('extension')
 }
 
-repositories {
-    mavenLocal()
-}
-
 sourceSets.main.extensions.getByType(MDGExtension).disable()
 sourceSets.test.extensions.getByType(MDGExtension).enable()
 
@@ -160,31 +156,22 @@ sourceSets.each {
     }
 }
 
-jij.onConfiguration('groovy') {
-    final manifestFix = new ForgeManifestFixerTransformer(modType: 'LIBRARY', modulePrefix: 'org.groovymc.gml.groovyjij')
-    eachMatching('.+') {
-        versionRange nextMajor
-        transform manifestFix
-    }
-}
-
 final manifestAttr = [
-        'Specification-Title'   : 'GroovyModLoader',
+        'Specification-Title'   : 'GroovyModLoader - Core',
         'Specification-Vendor'  : 'GroovyMC',
         'Specification-Version' : 1,
         'Implementation-Title'  : project.name,
         'Implementation-Version': project.version,
         'Implementation-Vendor' : 'GroovyMC',
         'GitCommit'             : managedVersioning.hash,
-        'FMLModType'            : 'LIBRARY'
+        'FMLModType'            : 'LIBRARY',
+        'Automatic-Module-Name': 'org.groovymc.gml.core'
 ]
 
 tasks.named('jar', Jar).configure {
     from sourceSets.extension.output
     from sourceSets.transform.output
-    manifest.attributes(manifestAttr + [
-            'Automatic-Module-Name': 'org.groovymc.gml'
-    ])
+    manifest.attributes(manifestAttr)
     archiveClassifier = 'slim'
 }
 
@@ -197,9 +184,7 @@ tasks.named('fullJar', ForgeJarInJarTask).configure {
     from(sourceSets.main.output)
     from(sourceSets.transform.output)
     from(sourceSets.extension.output)
-    manifest.attributes(manifestAttr + [
-            'Automatic-Module-Name': 'org.groovymc.gml'
-    ])
+    manifest.attributes(manifestAttr)
     archiveClassifier.set('')
     group('build')
     fromConfiguration(project.configurations.include)
@@ -289,7 +274,7 @@ publishing {
 
             pom {
                 name = 'GML'
-                description = 'A language provider for Forge mods for Groovy'
+                description = 'The core component of a language provider for NeoForge mods for Groovy'
                 sharedMetadata(it)
             }
         }
