@@ -5,10 +5,9 @@
 
 package testmod
 
+import net.neoforged.fml.common.EventBusSubscriber
 import org.groovymc.gml.BaseGMod
 import org.groovymc.gml.GMod
-import org.groovymc.gml.bus.EventBusSubscriber
-import org.groovymc.gml.bus.type.ModBus
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import net.neoforged.bus.api.SubscribeEvent
@@ -18,7 +17,7 @@ import net.neoforged.fml.event.lifecycle.FMLConstructModEvent
 @Slf4j
 @CompileStatic
 @GMod('gmltestmod')
-@EventBusSubscriber(ModBus)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 class TestMod implements BaseGMod {
     TestMod() {
         this('hi')

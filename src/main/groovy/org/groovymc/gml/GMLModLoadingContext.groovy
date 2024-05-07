@@ -43,5 +43,4 @@ class GMLModLoadingContext {
     static GMLModLoadingContext get() {
         return ModLoadingContext.get().extension()
     }
-
 }

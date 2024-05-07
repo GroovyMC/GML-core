@@ -11,7 +11,7 @@ import com.matyrobbrt.enhancedgroovy.dsl.ClassTransformer
              type: 'org.groovymc.gml.bus.GModEventBus',
              modifiers: ['private', 'final']
 
-    addField name: 'forgeBus',
+    addField name: 'gameBus',
              type: 'net.neoforged.bus.api.IEventBus',
              modifiers: ['private', 'final']
 
@@ -19,7 +19,7 @@ import com.matyrobbrt.enhancedgroovy.dsl.ClassTransformer
               returnType: 'org.groovymc.gml.bus.GModEventBus',
               modifiers: ['private', 'final']
 
-    addMethod name: 'getForgeBus',
+    addMethod name: 'getGameBus',
               returnType: 'net.neoforged.bus.api.IEventBus',
               modifiers: ['private', 'final']
 }

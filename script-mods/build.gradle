@@ -9,7 +9,7 @@ base {
     archivesName = 'script-mods'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
     mavenCentral()
@@ -26,8 +26,7 @@ configurations {
 }
 
 dependencies {
-    implementation 'cpw.mods:securejarhandler:2.1.4'
-    implementation 'net.minecraftforge:forgespi:6.0.0'
+    implementation 'cpw.mods:securejarhandler:3.0.4'
     implementation 'com.electronwill.night-config:toml:3.6.4'
     implementation "org.groovymc:groovybundler:${project.groovybundler_version}"
     implementation "net.neoforged.fancymodloader:loader:${fml_version}"

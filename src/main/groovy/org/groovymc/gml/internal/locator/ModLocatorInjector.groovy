@@ -5,18 +5,15 @@
 
 package org.groovymc.gml.internal.locator
 
-import org.groovymc.gml.util.Reflections
-import org.groovymc.gml.util.Reflections.MethodCaller
-import cpw.mods.modlauncher.api.IModuleLayerManager
 import groovy.transform.CompileStatic
 import net.neoforged.fml.loading.FMLLoader
-import net.neoforged.fml.loading.moddiscovery.InvalidModFileException
 import net.neoforged.fml.loading.moddiscovery.ModFile
 import net.neoforged.fml.loading.moddiscovery.ModValidator
 import net.neoforged.neoforgespi.language.IConfigurable
 import net.neoforged.neoforgespi.locating.IModFile
-import net.neoforged.neoforgespi.locating.IModLocator
 import org.apache.commons.lang3.function.TriFunction
+import org.groovymc.gml.util.Reflections
+import org.groovymc.gml.util.Reflections.MethodCaller
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -30,10 +27,10 @@ class ModLocatorInjector {
     private static boolean wasInjected
     private static final Logger log = LoggerFactory.getLogger(ModLocatorInjector.class)
     private static final Field modValidatorField = FMLLoader.class.getDeclaredField('modValidator')
-    private static final Field moduleLayerManagerField = FMLLoader.class.getDeclaredField('moduleLayerManager')
-    private static final Field candidateModsField = ModValidator.class.getDeclaredField('candidateMods')
-    private static final Field brokenFilesField = ModValidator.class.getDeclaredField('brokenFiles')
-    private static final MethodCaller<List<ModFile>> validateFiles = Reflections.methodSpecial(ModValidator, 'validateFiles', MethodType.methodType(List, List))
+    //private static final Field moduleLayerManagerField = FMLLoader.class.getDeclaredField('moduleLayerManager')
+    //private static final Field candidateModsField = ModValidator.class.getDeclaredField('candidateMods')
+    //private static final Field brokenFilesField = ModValidator.class.getDeclaredField('brokenFiles')
+    //private static final MethodCaller<List<ModFile>> validateFiles = Reflections.methodSpecial(ModValidator, 'validateFiles', MethodType.methodType(List, List))
 
     private static final TriFunction<FileSystem, IModFile, String, IConfigurable> infoParser = ((FileSystem fs, IModFile modFile, String modId) -> {
         final String SCRIPTS_DIR = 'scripts'
@@ -55,6 +52,8 @@ class ModLocatorInjector {
     // Modlocators aren't JiJable, so let's use some hacks to load script mods
     @SuppressWarnings('UnnecessaryQualifiedReference')
     static void inject() {
+        // TODO: re-enable script mods
+        /*
         if (wasInjected) return; wasInjected = true
 
         final module = Reflections.<IModuleLayerManager>getStaticField(moduleLayerManagerField).getLayer(IModuleLayerManager.Layer.PLUGIN).orElseThrow().findModule('org.groovymc.gml.scriptmods')
@@ -81,5 +80,6 @@ class ModLocatorInjector {
             candidateMods.add(0, it)
         }
         log.info('Injected ScriptModLocator mod candidates. Found {} valid mod candidates and {} broken mod files.', candidateMods.size() - oldCandidateSize, oldBrokenSize - brokenFiles.size())
+        */
     }
 }

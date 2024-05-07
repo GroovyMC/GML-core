@@ -6,7 +6,9 @@
 package org.groovymc.gml
 
 import groovy.transform.CompileStatic
+import net.neoforged.api.distmarker.Dist
 import org.codehaus.groovy.transform.GroovyASTTransformationClass
+import org.groovymc.gml.util.Environment
 
 import java.lang.annotation.Documented
 import java.lang.annotation.ElementType
@@ -33,4 +35,8 @@ import java.lang.annotation.Target
      * By default, you will have a resource domain that matches the modid. All these uses require that constraints are imposed on the format of the modid.
      */
     String value()
+
+    Dist[] dist() default [Dist.CLIENT, Dist.DEDICATED_SERVER]
+
+    Environment[] environment() default [Environment.DEV, Environment.PRODUCTION]
 }

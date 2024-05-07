@@ -5,31 +5,27 @@
 
 package org.groovymc.gml
 
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.neoforgespi.language.IModInfo
-import net.neoforged.neoforgespi.language.ModFileScanData
-import org.groovymc.gml.bus.EventBusSubscriber
-import org.groovymc.gml.bus.GModEventBus
-import org.groovymc.gml.bus.type.GameBus
-import org.groovymc.gml.bus.type.ModBus
-import org.groovymc.gml.internal.scripts.ScriptFileCompiler
-import org.groovymc.gml.util.Environment
-import org.groovymc.gml.util.Reflections
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.transform.TupleConstructor
 import groovy.util.logging.Slf4j
+import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.EventBusErrorMessage
 import net.neoforged.bus.api.BusBuilder
-import net.neoforged.fml.Bindings
+import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.ModLoadingException
-import net.neoforged.fml.ModLoadingStage
+import net.neoforged.fml.ModLoadingIssue
 import net.neoforged.fml.event.IModBusEvent
-import net.neoforged.fml.loading.FMLEnvironment
-import net.neoforged.fml.loading.moddiscovery.ModAnnotation
-import org.objectweb.asm.Type
+import net.neoforged.fml.javafmlmod.AutomaticEventSubscriber
+import net.neoforged.fml.javafmlmod.FMLModContainer
+import net.neoforged.fml.loading.FMLLoader
+import net.neoforged.neoforgespi.language.IModInfo
+import net.neoforged.neoforgespi.language.ModFileScanData
+import org.groovymc.gml.bus.GModEventBus
+import org.groovymc.gml.util.Environment
+import org.groovymc.gml.util.Reflections
 
+import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 import java.util.function.Consumer
@@ -37,21 +33,18 @@ import java.util.function.Consumer
 @Slf4j
 @CompileStatic
 final class GModContainer extends ModContainer {
-    private static final Type FORGE_EBS = Type.getType(GameBus)
-    private static final Type MOD_EBS = Type.getType(ModBus)
-    private static final Type EBS = Type.getType(EventBusSubscriber)
     private static Consumer<IModInfo> packMetaInjector
 
-    private final Class modClass
-    private Object mod
+    private final List<Class<?>> modClasses
+    private final Module module
+
     private final GModEventBus modBus
     private final ModFileScanData scanData
 
-    GModContainer(final IModInfo info, final String className, final ModFileScanData scanData, final ModuleLayer layer) {
+    GModContainer(final IModInfo info, List<String> entrypoints, final ModFileScanData scanData, final ModuleLayer layer) {
         super(info)
         this.scanData = scanData
 
-        activityMap[ModLoadingStage.CONSTRUCT] = this.&constructMod
         this.contextExtension = { new GMLModLoadingContext(this) }
 
         modBus = new GModEventBus(BusBuilder.builder()
@@ -60,14 +53,27 @@ final class GModContainer extends ModContainer {
                     .allowPerPhasePost()
                     .build())
 
-        final module = layer.findModule(info.owningFile.moduleName()).orElseThrow()
-        modClass = Class.forName(module, className)
-        log.debug('Loaded GMod class {} on loader {} and module {}', className, modClass.classLoader, module)
+        this.module = layer.findModule(info.owningFile.moduleName()).orElseThrow()
 
+        this.modClasses = new ArrayList();
+        for (String entrypoint : entrypoints) {
+            try {
+                Class<?> cls = Class.forName(module, entrypoint)
+                this.modClasses.add(cls)
+                log.trace("Loaded modclass {} with {}", cls.getName(), cls.getClassLoader())
+            } catch (Throwable e) {
+                log.error("Failed to load class {}", entrypoint, e)
+                throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmodclass").withCause(e).withAffectedMod(info))
+            }
+        }
+
+        // TODO: re-enable script mods
+        /*
         if (ScriptFileCompiler.isScriptMod(info.owningFile.file)) {
             // generate the pack.mcmeta for the script
-            packMetaInjector(modClass.classLoader).accept(info)
+            packMetaInjector(module.classLoader).accept(info)
         }
+        */
     }
 
     private static Consumer<IModInfo> packMetaInjector(ClassLoader loader) {
@@ -78,92 +84,44 @@ final class GModContainer extends ModContainer {
         return packMetaInjector = Reflections.<Consumer<IModInfo>>constructor(ClassLoader.forName('org.groovymc.gml.scriptmods.PackMetaInjector'), MethodType.methodType(void, int, int)).call(formatVersions[0], formatVersions[1])
     }
 
-    private void constructMod() {
-        try {
-            log.debug('Loading mod class {} for {}', modClass.name, this.modId)
-            def modCtor = resolveCtor()
-            this.mod = modCtor.parameterTypes.length > 0 ? modCtor.newInstance(this) : modCtor.newInstance()
-            if (mod instanceof Script) mod.run()
-            log.debug('Successfully loaded mod {}', this.modId)
-            injectEBS()
-        } catch (final Throwable t) {
-            log.error('Failed to create mod from class {} for modid {}', modClass.name, modId, t)
-            throw new ModLoadingException(this.modInfo, ModLoadingStage.CONSTRUCT, 'fml.modloading.failedtoloadmod', t, this.modClass)
+    protected void constructMod() {
+        for (Class<?> modClass : modClasses) {
+            constructMod(modClass)
         }
-    }
-
-    private boolean setup = false
-    @Deprecated(forRemoval = true, since = "1.1.1")
-    @SuppressWarnings('unused')
-    void setupMod(Object mod) {
-        if (!setup) {
-            log.debug('Mod {} was compiled with a previous version of GML, calling deprecated `setupMod` method, which will be removed in the future.', modId)
-            injectBus(mod)
-            setup = true
-        }
-    }
-
-    @CompileDynamic
-    @SuppressWarnings('GrUnresolvedAccess')
-    private void injectBus(Object mod) {
-        log.debug('Injecting bus into mod {}, with class {}', modId, modClass)
-        mod.modBus = getModBus()
-        log.debug('Successfully injected bus into mod {}, with class {}', modId, modClass)
+        injectEBS()
     }
 
     private void injectEBS() {
-        log.debug('Registering EventBusSubscribers for mod {}', modId)
-
-        scanData.annotations.findAll { it.annotationType() == EBS }
-            .each {
-                final modId = it.annotationData()['modId'] as String
-                final boolean isInMod = { ModFileScanData.AnnotationData data ->
-                    if (modId !== null && !modId.isEmpty()) {
-                        return modId == this.getModId()
-                    }
-                    return data.clazz().internalName.startsWith(modClass.packageName.replace('.' as char, '/' as char))
-                }.call(it)
-
-                if (!isInMod) return
-                final bus = it.annotationData()['value'] as Type ?: FORGE_EBS
-                final dists = enumValues(it, 'dist', Dist)
-                final envs = enumValues(it, 'environment', Environment)
-
-                if (FMLEnvironment.dist in dists && Environment.current() in envs) {
-                    log.info('Auto-Subscribing EBS class {} to bus {}', it.clazz().className, bus)
-                    final eventBus = (switch (bus) {
-                        case null, FORGE_EBS -> Bindings.getForgeBus().get()
-                        case MOD_EBS -> getModBus()
-                        default -> throw new IllegalArgumentException("Unknown bus: $bus")
-                    })
-                    final cls = Class.forName(it.clazz().className, true, modClass.classLoader)
-                    if (it.annotationData()['createInstance'] === true) {
-                        eventBus.register(cls.getDeclaredConstructor().newInstance())
-                    } else {
-                        eventBus.register(cls)
-                    }
-                }
-            }
-
-        log.debug('Registered EventBusSubscribers for mod {}', modId)
+        AutomaticEventSubscriber.inject(this, scanData, module)
     }
 
-    private static <T extends Enum<T>> Set<T> enumValues(final ModFileScanData.AnnotationData data, final String name, final Class<T> clazz) {
-        final List<ModAnnotation.EnumHolder> declaredHolders = data.annotationData()[name] as List<ModAnnotation.EnumHolder>
-        final List<ModAnnotation.EnumHolder> holders = declaredHolders ?: makeDefaultHolders(clazz)
-        holders.collect { Enum.valueOf(clazz, it.value) }.toSet()
+    @TupleConstructor(includeFields = true)
+    private static class FoundCtor {
+        public final Constructor<?> ctor
+        private final List<Set<Class<?>>> argTypes
     }
 
-    private static <T extends Enum<T>> List<ModAnnotation.EnumHolder> makeDefaultHolders(Class<T> enumClass) {
-        List.of(enumClass.getEnumConstants()).collect { new ModAnnotation.EnumHolder(null, it.name()) }
-    }
-
-    private Constructor resolveCtor() {
-        try {
-            return modClass.getDeclaredConstructor(GModContainer)
-        } catch (NoSuchMethodException ignored) {
-            return modClass.getDeclaredConstructor()
+    private Object enter(Class<?> clazz) {
+        var ctors = clazz.getDeclaredConstructors()
+        Map<Class<?>, Object> allowedConstructorArgs = [
+                (IEventBus.class): this.eventBus,
+                (ModContainer.class): this,
+                (FMLModContainer.class): this,
+                (Dist.class): FMLLoader.getDist(),
+                (Environment.class): Environment.current()
+        ]
+        var argTypes = ctors.collect {
+            new FoundCtor(it, it.parameterTypes.collect { argType -> allowedConstructorArgs.keySet().findAll { t -> argType.isAssignableFrom(t) } })
+        }.findAll {
+            it.argTypes.every { it.size() == 1 }
         }
+        if (argTypes.size() != 1) {
+            throw new RuntimeException("Ambiguous constructor for mod class ${clazz.name}")
+        }
+        var ctor = argTypes[0].ctor
+        var args = argTypes[0].argTypes.collect { allowedConstructorArgs[it[0]] }
+        // Groovy doesn't like varargs with Object...
+        ctor.invokeMethod('newInstance', args.toArray())
     }
 
     GModEventBus getModBus() {
@@ -171,17 +129,19 @@ final class GModContainer extends ModContainer {
     }
 
     @Override
-    boolean matches(Object mod) {
-        return mod.is(this.mod)
-    }
-
-    @Override
-    Object getMod() {
-        return mod
-    }
-
-    @Override
     IEventBus getEventBus() {
         return modBus
+    }
+
+    void constructMod(Class<?> clazz) {
+        try {
+            log.debug('Loading mod class {} for {}', clazz.name, this.modId)
+            def obj = enter(clazz)
+            if (obj instanceof Script) obj.run()
+            log.debug('Successfully loaded mod {}', this.modId)
+        } catch (final Throwable t) {
+            log.error('Failed to create mod from class {} for modid {}', clazz.name, modId, t)
+            throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmod").withCause(t).withAffectedMod(this.modInfo))
+        }
     }
 }

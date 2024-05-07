@@ -35,10 +35,10 @@ final class BusTransformer implements GModTransformer {
         )
 
         final forgeBus = classNode.addField(
-                'forgeBus', Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL, ClassHelper.make(IEventBus),
+                'gameBus', Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL, ClassHelper.make(IEventBus),
                 GeneralUtils.propX(GeneralUtils.classX(NeoForge), 'EVENT_BUS')
         )
-        getOrCreateMethod(classNode, 'getForgeBus', forgeBus.type).setCode(
+        getOrCreateMethod(classNode, 'getGameBus', forgeBus.type).setCode(
                 GeneralUtils.returnS(GeneralUtils.fieldX(forgeBus))
         )
     }
