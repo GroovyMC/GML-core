@@ -13,8 +13,6 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.EventBusErrorMessage
 import net.neoforged.bus.api.BusBuilder
 import net.neoforged.bus.api.IEventBus
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.fml.Bindings
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.ModLoadingException
 import net.neoforged.fml.ModLoadingIssue
@@ -32,7 +30,6 @@ import org.objectweb.asm.Type
 
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
-import java.lang.reflect.Modifier
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -109,7 +106,7 @@ final class GModContainer extends ModContainer {
                         if (modId !== null && !modId.isEmpty()) {
                             return modId == this.getModId()
                         }
-                        return modClasses.any { data.clazz().internalName.startsWith(it.packageName.replace('.' as char, '/' as char)) }
+                        return modClasses.any { data.clazz().getClassName().startsWith("${it.packageName}.") }
                     }.call(it)
 
                     if (!isInMod) return
