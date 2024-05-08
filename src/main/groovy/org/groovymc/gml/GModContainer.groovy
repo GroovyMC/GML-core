@@ -5,6 +5,7 @@
 
 package org.groovymc.gml
 
+import com.google.common.base.Suppliers
 import groovy.transform.CompileStatic
 import groovy.transform.TupleConstructor
 import groovy.util.logging.Slf4j
@@ -12,30 +13,37 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.EventBusErrorMessage
 import net.neoforged.bus.api.BusBuilder
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.bus.api.SubscribeEvent
+import net.neoforged.fml.Bindings
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.ModLoadingException
 import net.neoforged.fml.ModLoadingIssue
 import net.neoforged.fml.event.IModBusEvent
 import net.neoforged.fml.javafmlmod.AutomaticEventSubscriber
-import net.neoforged.fml.javafmlmod.FMLModContainer
 import net.neoforged.fml.loading.FMLLoader
 import net.neoforged.neoforgespi.language.IModInfo
 import net.neoforged.neoforgespi.language.ModFileScanData
+import org.groovymc.gml.bus.GEventBusSubscriber
 import org.groovymc.gml.bus.GModEventBus
+import org.groovymc.gml.internal.GMLLangLoader
 import org.groovymc.gml.util.Environment
 import org.groovymc.gml.util.Reflections
+import org.objectweb.asm.Type
 
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
+import java.lang.reflect.Modifier
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 @Slf4j
 @CompileStatic
 final class GModContainer extends ModContainer {
+    private static final Type GEBS = Type.getType(GEventBusSubscriber)
     private static Consumer<IModInfo> packMetaInjector
 
     private final List<Class<?>> modClasses
+    private final Map<Class<?>, Supplier<Object>> modInstances = [:]
     private final Module module
 
     private final GModEventBus modBus
@@ -55,7 +63,7 @@ final class GModContainer extends ModContainer {
 
         this.module = layer.findModule(info.owningFile.moduleName()).orElseThrow()
 
-        this.modClasses = new ArrayList();
+        this.modClasses = new ArrayList()
         for (String entrypoint : entrypoints) {
             try {
                 Class<?> cls = Class.forName(module, entrypoint)
@@ -93,6 +101,40 @@ final class GModContainer extends ModContainer {
 
     private void injectEBS() {
         AutomaticEventSubscriber.inject(this, scanData, module)
+
+        scanData.annotations.findAll { it.annotationType() == GEBS }
+                .each {
+                    final modId = it.annotationData()['modId'] as String
+                    final boolean isInMod = { ModFileScanData.AnnotationData data ->
+                        if (modId !== null && !modId.isEmpty()) {
+                            return modId == this.getModId()
+                        }
+                        return modClasses.any { data.clazz().internalName.startsWith(it.packageName.replace('.' as char, '/' as char)) }
+                    }.call(it)
+
+                    if (!isInMod) return
+
+                    if (!(AutomaticEventSubscriber.getSides(it.annotationData().get('dist')).contains(FMLLoader.getDist()) &&
+                            GMLLangLoader.getEnvironments(it.annotationData().get('environment')).contains(Environment.current()))) {
+                        return
+                    }
+
+                    log.info('Auto-Subscribing GEventBusSubscriber class {}', it.clazz().className)
+
+                    final clazz = Class.forName(module, it.clazz().className)
+                    final obj = enter(clazz).get()
+                    if (clazz.getMethod('gml$registerListeners') !== null) {
+                        try {
+                            obj.invokeMethod('gml$registerListeners', [])
+                        } catch (Throwable t) {
+                            log.error('Failed to register listeners for class {}', clazz.name, t)
+                            throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmod").withCause(t).withAffectedMod(this.modInfo))
+                        }
+                    } else {
+                        log.error('Failed to find generated registration method in class {}; the @GEventBusSubscriber ASTT may not have ran', clazz.name)
+                        throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmod").withAffectedMod(this.modInfo))
+                    }
+                }
     }
 
     @TupleConstructor(includeFields = true)
@@ -101,12 +143,14 @@ final class GModContainer extends ModContainer {
         private final List<Set<Class<?>>> argTypes
     }
 
-    private Object enter(Class<?> clazz) {
+    private synchronized Supplier<Object> enter(Class<?> clazz) {
+        if (modInstances.containsKey(clazz)) {
+            return modInstances[clazz]
+        }
         var ctors = clazz.getDeclaredConstructors()
         Map<Class<?>, Object> allowedConstructorArgs = [
-                (IEventBus.class): this.eventBus,
-                (ModContainer.class): this,
-                (FMLModContainer.class): this,
+                (GModEventBus.class): this.eventBus,
+                (GModContainer.class): this,
                 (Dist.class): FMLLoader.getDist(),
                 (Environment.class): Environment.current()
         ]
@@ -116,12 +160,22 @@ final class GModContainer extends ModContainer {
             it.argTypes.every { it.size() == 1 }
         }
         if (argTypes.size() != 1) {
-            throw new RuntimeException("Ambiguous constructor for mod class ${clazz.name}")
+            Exception e = new RuntimeException("Ambiguous constructor for mod class ${clazz.name}")
+            log.error("Failed to create mod instance for class {}", clazz.name, e)
+            throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmod").withCause(e).withAffectedMod(this.modInfo))
         }
         var ctor = argTypes[0].ctor
         var args = argTypes[0].argTypes.collect { allowedConstructorArgs[it[0]] }
         // Groovy doesn't like varargs with Object...
-        ctor.invokeMethod('newInstance', args.toArray())
+        Supplier<Object> supplier = Suppliers.memoize {
+            try {
+                ctor.invokeMethod('newInstance', args.toArray())
+            } catch (Throwable t) {
+                log.error('Failed to create mod instance for class {}', clazz.name, t)
+                throw new ModLoadingException(ModLoadingIssue.error("fml.modloading.failedtoloadmod").withCause(t).withAffectedMod(this.modInfo))
+            }
+        }
+        modInstances[clazz] = supplier
     }
 
     GModEventBus getModBus() {
@@ -136,7 +190,7 @@ final class GModContainer extends ModContainer {
     void constructMod(Class<?> clazz) {
         try {
             log.debug('Loading mod class {} for {}', clazz.name, this.modId)
-            def obj = enter(clazz)
+            def obj = enter(clazz).get()
             if (obj instanceof Script) obj.run()
             log.debug('Successfully loaded mod {}', this.modId)
         } catch (final Throwable t) {

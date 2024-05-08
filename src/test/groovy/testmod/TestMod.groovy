@@ -13,11 +13,12 @@ import groovy.util.logging.Slf4j
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent
+import org.groovymc.gml.bus.GEventBusSubscriber
 
 @Slf4j
 @CompileStatic
 @GMod('gmltestmod')
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@GEventBusSubscriber
 class TestMod implements BaseGMod {
     TestMod() {
         this('hi')
