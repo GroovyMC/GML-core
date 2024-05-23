@@ -11,7 +11,7 @@ plugins {
     id 'net.neoforged.gradle.userdev' version '7.0.120'
     id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.24'
     id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-1'
-    id 'dev.lukebemish.managedversioning' version '1.2.7'
+    id 'dev.lukebemish.managedversioning' version '1.2.19'
 }
 
 group = 'org.groovymc.gml'
@@ -31,16 +31,28 @@ managedVersioning {
             workflowDispatch.set(true)
             gradleJob {
                 name.set 'build'
+                javaVersion.set '21'
                 step {
                     setupGitUser()
                 }
                 readOnly.set false
                 gradlew 'Tag Release', 'tagRelease'
                 gradlew 'Build', 'build'
-                gradlew 'Publish', 'publish', 'closeAndReleaseSonatypeStagingRepository'
                 step {
                     run.set 'git push && git push --tags'
                 }
+                recordVersion 'Record Version', 'version'
+                secret('CENTRAL_MAVEN_USER')
+                secret('CENTRAL_MAVEN_PASSWORD')
+                secret('GPG_SIGNING_KEY')
+                secret('GPG_KEY_PASSWORD')
+            }
+            gradleJob {
+                name.set 'publish'
+                javaVersion.set '21'
+                needs.add('build')
+                tag.set('${{needs.build.outputs.version}}')
+                gradlew 'Publish', 'publish', 'closeAndReleaseSonatypeStagingRepository'
                 secret('CENTRAL_MAVEN_USER')
                 secret('CENTRAL_MAVEN_PASSWORD')
                 secret('GPG_SIGNING_KEY')
