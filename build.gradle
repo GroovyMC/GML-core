@@ -1,6 +1,4 @@
 import com.matyrobbrt.gradle.jarinjar.task.ForgeJarInJarTask
-import com.matyrobbrt.gradle.jarinjar.transform.ForgeManifestFixerTransformer
-import org.groovymc.modsdotgroovy.gradle.MDGExtension
 
 plugins {
     id 'java-library'
@@ -11,7 +9,7 @@ plugins {
     id 'maven-publish'
     id 'com.matyrobbrt.jarinjar' version '1.2.0'
     id 'net.neoforged.gradle.userdev' version '7.0.120'
-    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.22'
+    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.24'
     id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-1'
     id 'dev.lukebemish.managedversioning' version '1.2.7'
 }
@@ -62,10 +60,13 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 sourceSets {
     register('transform')
     register('extension')
+    main {
+        modsDotGroovy.disable()
+    }
+    test {
+        modsDotGroovy.enable()
+    }
 }
-
-sourceSets.main.extensions.getByType(MDGExtension).disable()
-sourceSets.test.extensions.getByType(MDGExtension).enable()
 
 sourceSets.each {
     def localRuntime = configurations.maybeCreate(it.getTaskName(null, 'localRuntime'))
