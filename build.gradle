@@ -139,7 +139,7 @@ runs {
 }
 
 dependencies {
-    minecraft "net.neoforged:neoforge:20.6.42-beta"
+    minecraft "net.neoforged:neoforge:20.6.113-beta"
 
     transformCompileOnly(sourceSets.main.output)
     compileOnly(testCompileOnly(sourceSets.extension.output))

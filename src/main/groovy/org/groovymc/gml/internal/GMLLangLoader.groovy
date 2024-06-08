@@ -13,6 +13,7 @@ import net.neoforged.fml.ModLoadingIssue
 import net.neoforged.fml.common.Mod
 import net.neoforged.fml.javafmlmod.AutomaticEventSubscriber
 import net.neoforged.fml.loading.FMLLoader
+import net.neoforged.fml.loading.JarVersionLookupHandler
 import net.neoforged.fml.loading.modscan.ModAnnotation
 import net.neoforged.neoforgespi.IIssueReporting
 import net.neoforged.neoforgespi.language.IModInfo
@@ -35,6 +36,11 @@ final class GMLLangLoader implements IModLanguageLoader {
     @Override
     String name() {
         return 'gml'
+    }
+
+    @Override
+    String version() {
+        return JarVersionLookupHandler.getVersion(this.getClass()).orElse(null)
     }
 
     @Override
