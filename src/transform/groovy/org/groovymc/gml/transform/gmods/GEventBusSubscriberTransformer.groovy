@@ -27,7 +27,7 @@ class GEventBusSubscriberTransformer extends AbstractASTTransformation {
     private static final ClassNode SUBSCRIBE_EVENT = ClassHelper.make(SubscribeEvent)
     private static final ClassNode MOD_BUS_EVENT = ClassHelper.make('net.neoforged.fml.event.IModBusEvent')
     private static final ClassNode NEOFORGE = ClassHelper.make('net.neoforged.neoforge.common.NeoForge')
-    private static final ClassNode GML_MOD_LOADING_CONTEXT = ClassHelper.make('org.groovymc.gml.GMLModLoadingContext')
+    private static final ClassNode MOD_LOADING_CONTEXT = ClassHelper.make('net.neoforged.fml.ModLoadingContext')
     private static final String GML_REGISTRATION_METHOD_NAME = 'gml$registerListeners'
 
     private static BlockStatement buildRegistration(ClassNode node) {
@@ -53,7 +53,7 @@ class GEventBusSubscriberTransformer extends AbstractASTTransformation {
         return GeneralUtils.ifElseS(
                 GeneralUtils.callX(GeneralUtils.classX(MOD_BUS_EVENT), 'isAssignableFrom', GeneralUtils.args(paramTypeExpression)),
                 GeneralUtils.stmt(GeneralUtils.callX(
-                        GeneralUtils.callX(GeneralUtils.callX(new ClassExpression(GML_MOD_LOADING_CONTEXT), 'get'), 'getModEventBus'),
+                        GeneralUtils.callX(GeneralUtils.callX(GeneralUtils.callX(new ClassExpression(MOD_LOADING_CONTEXT), 'get'), 'getActiveContainer'), 'getEventBus'),
                         'addListener',
                         GeneralUtils.args(paramTypeExpression, methodReference)
                 )),

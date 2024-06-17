@@ -5,7 +5,6 @@
 
 package testmod
 
-import net.neoforged.fml.common.EventBusSubscriber
 import org.groovymc.gml.BaseGMod
 import org.groovymc.gml.GMod
 import groovy.transform.CompileStatic
