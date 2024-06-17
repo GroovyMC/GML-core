@@ -5,8 +5,8 @@
 
 package org.groovymc.gml.transform.gmods
 
+import net.neoforged.fml.ModLoadingContext
 import net.neoforged.neoforge.common.NeoForge
-import org.groovymc.gml.GMLModLoadingContext
 import org.groovymc.gml.bus.GModEventBus
 import groovy.transform.CompileStatic
 import net.neoforged.bus.api.IEventBus
@@ -28,7 +28,7 @@ final class BusTransformer implements GModTransformer {
     void transform(ClassNode classNode, AnnotationNode annotationNode, SourceUnit source) {
         final modBus = classNode.addField(
                 'modBus', Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL, ClassHelper.make(GModEventBus),
-                GeneralUtils.callX(GeneralUtils.callX(ClassHelper.make(GMLModLoadingContext), 'get'), 'getModEventBus')
+                GeneralUtils.callX(GeneralUtils.callX(GeneralUtils.callX(ClassHelper.make(ModLoadingContext), 'get'), 'getActiveContainer'), 'getEventBus')
         )
         getOrCreateMethod(classNode, 'getModBus', modBus.type).setCode(
                 GeneralUtils.returnS(GeneralUtils.fieldX(modBus))

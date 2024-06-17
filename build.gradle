@@ -8,9 +8,9 @@ plugins {
     id 'signing'
     id 'maven-publish'
     id 'com.matyrobbrt.jarinjar' version '1.2.0'
-    id 'net.neoforged.gradle.userdev' version '7.0.120'
-    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.24'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-1'
+    id 'net.neoforged.gradle.userdev' version '7.0.143'
+    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.28'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
     id 'dev.lukebemish.managedversioning' version '1.2.19'
 }
 
@@ -139,7 +139,7 @@ runs {
 }
 
 dependencies {
-    minecraft "net.neoforged:neoforge:20.6.113-beta"
+    minecraft "net.neoforged:neoforge:21.0.14-beta"
 
     transformCompileOnly(sourceSets.main.output)
     compileOnly(testCompileOnly(sourceSets.extension.output))
@@ -197,7 +197,9 @@ tasks.named('fullJar', ForgeJarInJarTask).configure {
     tasks.build.dependsOn(it)
 }
 
-tasks.runClient.dependsOn(tasks.fullJar)
+afterEvaluate {
+    tasks.runClient.dependsOn(tasks.fullJar)
+}
 
 project(':script-mods').afterEvaluate {
     rootProject.tasks.named('fullJar', ForgeJarInJarTask) {

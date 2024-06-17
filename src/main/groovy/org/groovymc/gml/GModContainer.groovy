@@ -50,8 +50,6 @@ final class GModContainer extends ModContainer {
         super(info)
         this.scanData = scanData
 
-        this.contextExtension = { new GMLModLoadingContext(this) }
-
         modBus = new GModEventBus(BusBuilder.builder()
                     .setExceptionHandler { bus, event, listeners, i, cause -> log.error('Failed to process mod event: {}', new EventBusErrorMessage(event, i, listeners, cause)) }
                     .markerType(IModBusEvent)
