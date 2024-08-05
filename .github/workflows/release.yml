@@ -22,7 +22,7 @@
                 },
                 {
                     "name": "Validate Gradle Wrapper",
-                    "uses": "gradle/actions/wrapper-validation@v3"
+                    "uses": "gradle/actions/wrapper-validation@v4"
                 },
                 {
                     "with": {
@@ -38,7 +38,7 @@
                         "gradle-home-cache-cleanup": true
                     },
                     "name": "Setup Gradle",
-                    "uses": "gradle/actions/setup-gradle@v3"
+                    "uses": "gradle/actions/setup-gradle@v4"
                 },
                 {
                     "uses": "fregante/setup-git-user@v2"
@@ -107,7 +107,7 @@
                 },
                 {
                     "name": "Validate Gradle Wrapper",
-                    "uses": "gradle/actions/wrapper-validation@v3"
+                    "uses": "gradle/actions/wrapper-validation@v4"
                 },
                 {
                     "with": {
@@ -124,7 +124,7 @@
                         "gradle-home-cache-cleanup": true
                     },
                     "name": "Setup Gradle",
-                    "uses": "gradle/actions/setup-gradle@v3"
+                    "uses": "gradle/actions/setup-gradle@v4"
                 },
                 {
                     "name": "Publish",
