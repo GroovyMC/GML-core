@@ -8,8 +8,8 @@ plugins {
     id 'signing'
     id 'maven-publish'
     id 'com.matyrobbrt.jarinjar' version '1.2.0'
-    id 'net.neoforged.gradle.userdev' version '7.0.143'
-    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.28'
+    id 'net.neoforged.moddev' version '2.0.37-beta'
+    id 'org.groovymc.modsdotgroovy' version '2.0.0-beta.30'
     id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
     id 'dev.lukebemish.managedversioning' version '1.2.19'
 }
@@ -99,11 +99,6 @@ configurations {
     extensionCompileOnly.extendsFrom(groovy)
     transformCompileOnly.extendsFrom(groovy)
 
-    final mc = create('minecraft')
-    implementation.extendsFrom(mc)
-    extensionCompileOnly.extendsFrom(mc)
-    transformCompileOnly.extendsFrom(mc)
-
     javadocElements {
         canBeConsumed = true
         canBeResolved = false
@@ -118,29 +113,24 @@ configurations {
 
 tasks.register('fullJar', ForgeJarInJarTask)
 
-// Default run configurations.
-// These can be tweaked, removed, or duplicated as needed.
-runs {
-    // applies to all the run configs below
-    configureEach {
-        systemProperty 'forge.logging.markers', 'REGISTRIES'
-        systemProperty 'forge.logging.console.level', 'debug'
-
-        // We have to use the gradle run for this to work... Just normal NG jankiness
-        modSource project.sourceSets.test
+neoForge {
+    version = '21.0.14-beta'
+    addModdingDependenciesTo(sourceSets.test)
+    addModdingDependenciesTo(sourceSets.extension)
+    addModdingDependenciesTo(sourceSets.transform)
+    mods {
+        gml {
+            sourceSet(sourceSets.test)
+        }
     }
-
-    client {
-    }
-
-    server {
-        programArgument '--nogui'
-    }
+	runs {
+		client {
+			client()
+		}
+	}
 }
 
 dependencies {
-    minecraft "net.neoforged:neoforge:21.0.14-beta"
-
     transformCompileOnly(sourceSets.main.output)
     compileOnly(testCompileOnly(sourceSets.extension.output))
     testCompileOnly(sourceSets.transform.output)
@@ -150,7 +140,7 @@ dependencies {
         transitive = false
     }
 
-    testRuntimeOnly(project.files(tasks.named('fullJar')) {
+    testImplementation(project.files(tasks.named('fullJar')) {
         builtBy(tasks.named('fullJar'))
     })
 }
@@ -201,11 +191,11 @@ afterEvaluate {
     tasks.runClient.dependsOn(tasks.fullJar)
 }
 
-project(':script-mods').afterEvaluate {
+/*project(':script-mods').afterEvaluate {
     rootProject.tasks.named('fullJar', ForgeJarInJarTask) {
         fromJar(project(':script-mods').tasks.shadowJar as org.gradle.jvm.tasks.Jar) { versionRange nextMajor }
     }
-}
+}*/
 
 tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
     task.groovyOptions.fork = true
